@@ -1,0 +1,1186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <!-- Primary Meta Tags -->
+  <title>KeyFont - Free Client-Side Browser Font Converter & Viewer Tool</title>
+  <meta name="title" content=" Free Client-Side Browser Font Converter & Viewer Tool">
+  <meta name="description" content="Free browser-based font converter and viewer. Convert between TTF, OTF, WOFF, WOFF2, CFF, PFA, PFB, and SVG formats. No upload needed - 100% private.">
+  <meta name="keywords" content="font converter, font viewer, TTF converter, OTF converter, WOFF converter, WOFF2 converter, font format converter, web fonts, font tool, font editor, glyph viewer, free font tool, online font converter, CFF converter, PFA converter, PFB converter">
+  <meta name="author" content="KeyFont contributors">
+  <meta name="theme-color" content="#6c63ff">
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #d7dde4;
+      --panel: rgba(140, 163, 227, 0.16);
+      --panel-strong: rgba(255,255,255,0.24);
+      --panel-border: rgba(255,255,255,0.5);
+      --surface: rgba(255,255,255,0.18);
+      --surface2: rgba(255,255,255,0.14);
+      --border: rgba(255,255,255,0.45);
+      --text: #3d4558;
+      --text2: #6c6f72;
+      --muted: #6c6f72;
+      --accent: #6c63ff;
+      --accent2: #ff6b9d;
+      --blue: #8ca3e3;
+      --success: #4caf89;
+      --warn: #f0a030;
+      --danger: #e05050;
+      --radius: 8px;
+      --shadow: 0 10px 35px rgba(89, 103, 148, 0.18);
+      --glass-blur: blur(18px);
+    }
+
+    body {
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      background:
+        radial-gradient(circle at 20% 10%, rgba(255,255,255,.55), transparent 30%),
+        radial-gradient(circle at 85% 80%, rgba(255,255,255,.35), transparent 28%),
+        linear-gradient(180deg, #dfe3ef 0%, #cfd5e6 100%);
+      color: var(--text);
+      font-size: 14px;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ─── HEADER ─── */
+    #header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: linear-gradient(180deg, rgb(255,255,255), rgb(255,255,255));      border-bottom: 1px solid var(--border);
+      padding: 16px 28px 10px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    #header h1 { font-size: 28px; font-weight: 700; color: #667085; white-space: nowrap; letter-spacing: -0.02em; }
+    #header h1 span { color: #5e84df; font-weight: 700; }
+    #header-actions {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    /* ─── DROP ZONE ─── */
+    #drop-zone {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin: 60px auto;
+      max-width: 480px;
+      padding: 60px 40px;
+      border: 2px dashed rgba(140, 163, 227, 0.4);
+      border-radius: 26px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+      background: linear-gradient(180deg, rgba(255,255,255,.20), rgba(255,255,255,.10));
+      backdrop-filter: blur(18px);
+      box-shadow: var(--shadow), inset 0 1px 0 rgba(255,255,255,.34);
+    }
+    #drop-zone:hover, #drop-zone.drag-over {
+      border-color: #8ca3e3;
+      background: linear-gradient(180deg, rgba(255,255,255,.28), rgba(255,255,255,.16));
+      transform: translateY(-2px);
+      box-shadow: 0 14px 40px rgba(89, 103, 148, 0.22), inset 0 1px 0 rgba(255,255,255,.4);
+    }
+    #drop-zone .icon { font-size: 48px; }
+    #drop-zone h2 { font-size: 20px; font-weight: 600; }
+    #drop-zone p { color: var(--text2); font-size: 13px; }
+    #drop-zone .ext-badges { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+    .badge {
+      background: rgba(255,255,255,.48);
+      border: 1px solid rgba(220,227,242,.85);
+      border-radius: 6px;
+      padding: 3px 10px;
+      font-size: 12px;
+      font-weight: 600;
+      font-family: monospace;
+      color: #5e84df;
+      box-shadow: inset 0 1px 1px rgba(255,255,255,.55);
+    }
+
+    .card {
+      background: linear-gradient(180deg, rgba(255,255,255,.20), rgba(255,255,255,.10));
+      border: 1px solid var(--panel-border);
+      box-shadow: var(--shadow), inset 0 1px 0 rgba(255,255,255,.34);
+      backdrop-filter: var(--glass-blur);
+      border-radius: 26px;
+      padding: 24px;
+    }
+
+    #file-input, #folder-input { display: none; }
+
+    /* ─── FONT INFO ─── */
+    #font-info {
+      background: linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,.08));
+      border-bottom: 1px solid var(--border);
+      padding: 14px 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 20px;
+      align-items: flex-start;
+    }
+    .font-meta { flex: 1; min-width: 200px; }
+    .font-meta h2 { font-size: 18px; font-weight: 700; margin-bottom: 4px; }
+    .font-meta .subtitle { color: var(--text2); font-size: 12px; }
+    .meta-grid { display: flex; flex-wrap: wrap; gap: 8px 20px; margin-top: 8px; }
+    .meta-item { font-size: 12px; }
+    .meta-item .label { color: var(--text2); }
+    .meta-item .value { color: var(--text); font-family: monospace; }
+    #license-box {
+      background: rgba(240,160,48,.08);
+      border: 1px solid rgba(240,160,48,.4);
+      border-radius: 12px;
+      padding: 12px 16px;
+      max-width: 420px;
+      font-size: 12px;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.2);
+    }
+    #license-box .license-title { color: var(--warn); font-weight: 600; margin-bottom: 4px; }
+    #license-box .license-text { color: var(--text2); max-height: 80px; overflow-y: auto; line-height: 1.5; }
+
+    /* ─── CONTROLS ─── */
+    #controls {
+      background: linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,.08));
+      border-bottom: 1px solid var(--border);
+      padding: 10px 20px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      background: linear-gradient(180deg, rgba(255,255,255,.24), rgba(255,255,255,.12));
+      border: 1px solid rgba(255,255,255,.52);
+      border-radius: 10px;
+      color: #556780;
+      cursor: pointer;
+      font-size: 13px;
+      padding: 6px 14px;
+      transition: all 0.15s;
+      white-space: nowrap;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.34);
+      font-weight: 500;
+    }
+    .btn:hover {
+      background: linear-gradient(180deg, rgba(255,255,255,.32), rgba(255,255,255,.18));
+      transform: translateY(-1px);
+    }
+    .btn.active {
+      background: linear-gradient(180deg, rgba(108,99,255,.2), rgba(108,99,255,.12));
+      border-color: rgba(108,99,255,.5);
+      color: #6c63ff;
+    }
+    .btn.danger { border-color: var(--danger); color: var(--danger); }
+    .btn.danger:hover { background: var(--danger); color: #fff; }
+    .btn.success { border-color: var(--success); color: var(--success); }
+    .btn.success:hover { background: var(--success); color: #fff; }
+
+    .mode-toggle {
+      display: flex;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .mode-toggle .btn {
+      border: none;
+      border-radius: 0;
+      padding: 5px 14px;
+    }
+    .mode-toggle .btn + .btn { border-left: 1px solid var(--border); }
+
+    .sep { width: 1px; height: 24px; background: var(--border); }
+
+    #search-box {
+      background: rgba(255,255,255,.48);
+      border: 1px solid rgba(220,227,242,.85);
+      border-radius: 10px;
+      color: var(--text);
+      font-size: 13px;
+      padding: 6px 14px;
+      width: 180px;
+      outline: none;
+      box-shadow: inset 0 1px 1px rgba(255,255,255,.55);
+    }
+    #search-box:focus {
+      border-color: #8ca3e3;
+      box-shadow: inset 0 1px 1px rgba(255,255,255,.55), 0 0 0 3px rgba(140,163,227,.15);
+    }
+    #search-box::placeholder { color: var(--text2); }
+
+    #strip-text-input {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      font-size: 13px;
+      padding: 5px 12px;
+      width: 240px;
+      outline: none;
+    }
+    #strip-text-input:focus { border-color: var(--accent); }
+    #strip-text-input::placeholder { color: var(--text2); }
+
+    .toggle-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      color: var(--text2);
+      font-size: 13px;
+      user-select: none;
+    }
+    .toggle-label input[type="checkbox"] {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+      accent-color: var(--accent);
+    }
+    .toggle-label:hover {
+      color: var(--text);
+    }
+
+    /* ─── STATS BAR ─── */
+    #stats-bar {
+      padding: 8px 20px;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      background: rgba(255,255,255,.12);
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--text2);
+    }
+    #stats-bar strong { color: var(--text); }
+    #progress-bar {
+      flex: 1;
+      height: 3px;
+      background: var(--surface2);
+      border-radius: 2px;
+      overflow: hidden;
+    }
+    #progress-fill {
+      height: 100%;
+      background: var(--accent);
+      transition: width .3s;
+    }
+
+    /* ─── GLYPH GRID ─── */
+    #glyph-grid {
+      padding: 16px 20px;
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+      gap: 8px;
+      align-items: start;
+    }
+
+    #load-more-container {
+      padding: 20px;
+      text-align: center;
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      align-items: center;
+    }
+
+    #load-more-btn, #show-all-btn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      padding: 12px 32px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all .2s;
+      box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);
+    }
+
+    #show-all-btn {
+      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      box-shadow: 0 2px 8px rgba(245, 87, 108, 0.3);
+    }
+
+    #load-more-btn:hover, #show-all-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+
+    #show-all-btn:hover {
+      box-shadow: 0 4px 12px rgba(245, 87, 108, 0.4);
+    }
+
+    #load-more-btn:active, #show-all-btn:active {
+      transform: translateY(0);
+    }
+
+    .glyph-card {
+      position: relative;
+      background: rgba(255,255,255,.6);
+      border: 1px solid rgba(220,227,242,.85);
+      border-radius: 12px;
+      cursor: pointer;
+      user-select: none;
+      transition: all .15s;
+      overflow: hidden;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.5);
+      backface-visibility: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+    .glyph-card:hover {
+      border-color: #8ca3e3;
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(140, 163, 227, 0.15), inset 0 1px 0 rgba(255,255,255,.5);
+    }
+    .glyph-card.selected {
+      border-color: #6c63ff;
+      background: rgba(108,99,255,.08);
+      box-shadow: 0 0 0 1px rgba(108,99,255,.4), inset 0 1px 0 rgba(255,255,255,.5);
+      z-index: 1;
+    }
+    .glyph-card.selected .glyph-check { opacity: 1; }
+
+    .glyph-canvas-wrap {
+      width: 100%;
+      aspect-ratio: 1;
+      background: rgba(255,255,255,.85);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .glyph-canvas-wrap canvas { display: block; width: 100%; height: 100%; }
+    .glyph-canvas-wrap.empty-glyph {
+      background: repeating-linear-gradient(
+        45deg, rgba(255,255,255,.85) 0px, rgba(255,255,255,.85) 4px,
+        rgba(240,240,245,.85) 4px, rgba(240,240,245,.85) 8px
+      );
+    }
+    .glyph-canvas-wrap.pending { background: rgba(255,255,255,.85); }
+
+    #glyph-context-menu {
+      position: fixed;
+      z-index: 12000;
+      min-width: 190px;
+      background: linear-gradient(180deg, rgba(255,255,255,.96), rgba(245,248,255,.94));
+      border: 1px solid rgba(180, 192, 224, 0.9);
+      border-radius: 14px;
+      box-shadow: 0 18px 40px rgba(72, 89, 132, 0.24);
+      padding: 8px;
+      backdrop-filter: blur(12px);
+    }
+    #glyph-context-menu[hidden] { display: none; }
+    .glyph-context-title {
+      padding: 6px 8px 8px;
+      font-size: 11px;
+      color: var(--text2);
+      border-bottom: 1px solid rgba(210, 220, 242, 0.9);
+      margin-bottom: 6px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .glyph-context-action {
+      width: 100%;
+      border: none;
+      background: transparent;
+      color: var(--text);
+      text-align: left;
+      border-radius: 10px;
+      padding: 10px 12px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    .glyph-context-action:hover {
+      background: rgba(108,99,255,.1);
+      color: var(--accent);
+    }
+    .glyph-context-hint {
+      padding: 6px 8px 2px;
+      font-size: 11px;
+      color: var(--text2);
+    }
+
+    /* Hide previews when disabled */
+    body.hide-previews .glyph-canvas-wrap {
+      display: none;
+    }
+    body.hide-previews .glyph-card {
+      aspect-ratio: auto;
+    }
+    body.hide-previews #font-preview-panel {
+      display: none;
+    }
+    body.hide-previews #stats-bar {
+      display: none;
+    }
+    body.hide-previews #glyph-grid {
+      display: none;
+    }
+    body.hide-previews #load-more-container {
+      display: none;
+    }
+
+    /* Add space between content and export panel when previews are shown */
+    body:not(.hide-previews) #export-panel {
+      margin-top: 20px;
+    }
+
+    .glyph-info {
+      padding: 4px 5px 5px;
+      text-align: center;
+    }
+    .glyph-char {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .glyph-name {
+      font-size: 9px;
+      color: var(--text2);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-family: monospace;
+    }
+    .glyph-id {
+      font-size: 9px;
+      color: var(--border);
+      font-family: monospace;
+    }
+
+    .glyph-check {
+      position: absolute;
+      top: 4px;
+      right: 4px;
+      width: 16px;
+      height: 16px;
+      background: var(--accent);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      transition: opacity .15s;
+      font-size: 10px;
+      color: #fff;
+      font-weight: 700;
+    }
+
+    /* ─── FONT PREVIEW ─── */
+    #font-preview-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin: 20px;
+    }
+    #font-preview-panel h3 {
+      font-size: 16px;
+      margin-bottom: 12px;
+      color: var(--text);
+    }
+    #font-preview-text {
+      width: 100%;
+      min-height: 150px;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 16px;
+      color: var(--text);
+      font-size: 32px;
+      line-height: 1.4;
+      resize: vertical;
+      outline: none;
+      font-family: inherit;
+      white-space: pre-wrap;
+    }
+    #font-preview-text:focus {
+      border-color: var(--accent);
+    }
+
+    /* ─── EXPORT PANEL ─── */
+    #export-panel {
+      position: sticky;
+      bottom: 0;
+      background: linear-gradient(180deg, rgba(255,255,255,.95), rgba(255,255,255,.85));
+      border-top: 2px solid rgba(108, 99, 255, 0.3);
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      flex-wrap: wrap;
+      backdrop-filter: blur(18px);
+      box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
+      z-index: 90;
+    }
+    #export-summary {
+      flex: 1;
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text);
+      order: 10;
+      width: 100%;
+    }
+    #export-summary strong {
+      color: var(--accent);
+      font-size: 16px;
+    }
+    #saveas-wrap {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      font-size: 15px;
+      color: var(--text);
+      font-weight: 600;
+    }
+    #saveas-wrap select {
+      background: rgba(255,255,255,.95);
+      border: 2px solid rgba(108, 99, 255, 0.4);
+      border-radius: 10px;
+      color: var(--text);
+      font-size: 16px;
+      padding: 10px 16px;
+      outline: none;
+      font-weight: 600;
+      min-width: 180px;
+      box-shadow: 0 2px 8px rgba(108, 99, 255, 0.15);
+    }
+    #saveas-wrap select:focus {
+      border-color: var(--accent);
+      box-shadow: 0 2px 12px rgba(108, 99, 255, 0.3);
+    }
+    #export-btn {
+      background: linear-gradient(135deg, #6c63ff 0%, #5e84df 100%);
+      border: none;
+      border-radius: 12px;
+      color: #fff;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: 700;
+      padding: 14px 36px;
+      transition: all .2s;
+      box-shadow: 0 4px 16px rgba(108, 99, 255, 0.4), inset 0 1px 0 rgba(255,255,255,.25);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    #export-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 24px rgba(108, 99, 255, 0.5), inset 0 1px 0 rgba(255,255,255,.3);
+    }
+    #export-btn:disabled {
+      opacity: .5;
+      cursor: not-allowed;
+      transform: none;
+    }
+    #rebuild-note {
+      font-size: 12px;
+      color: var(--text2);
+      font-weight: 500;
+    }
+
+    /* ─── BATCH CONVERSION ─── */
+    #batch-panel {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 24px 24px;
+      overflow-y: auto;
+      text-align: center;
+      border-radius: 0;
+      box-shadow: none;
+    }
+    .batch-info {
+      color: var(--text2);
+      font-size: 14px;
+      margin: 12px 0;
+    }
+    #batch-count {
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .batch-format-selector {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      margin: 20px 0;
+    }
+    .batch-format-selector label {
+      font-size: 14px;
+      color: var(--text2);
+    }
+    .batch-format-selector select {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      color: var(--text);
+      padding: 8px 14px;
+      font-size: 14px;
+      outline: none;
+    }
+    .batch-output-selector {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      margin: 12px 0 4px;
+      font-size: 14px;
+      color: var(--text2);
+    }
+    .batch-output-selector .radio-label {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      cursor: pointer;
+      color: var(--text);
+    }
+    .batch-buttons {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      margin: 20px 0;
+    }
+    .progress-bar {
+      width: 100%;
+      max-width: 700px;
+      height: 8px;
+      background: var(--surface2);
+      border-radius: 4px;
+      overflow: hidden;
+      margin: 16px 0;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      transition: width 0.3s;
+      width: 0%;
+    }
+    .progress-text {
+      font-size: 13px;
+      color: var(--text2);
+      margin: 8px 0;
+    }
+    #batch-results {
+      text-align: left;
+      margin-top: 20px;
+      width: 100%;
+      max-width: 700px;
+      flex: 1;
+      min-height: 0;
+      overflow-y: auto;
+    }
+    .batch-result-item {
+      padding: 10px;
+      margin: 8px 0;
+      background: var(--surface2);
+      border-radius: 6px;
+      border-left: 3px solid var(--border);
+      font-size: 13px;
+    }
+    .batch-result-item.success {
+      border-left-color: var(--success);
+    }
+    .batch-result-item.error {
+      border-left-color: var(--warn);
+    }
+
+    /* ─── MISC ─── */
+    [hidden] { display: none !important; }
+    .loading-msg {
+      text-align: center;
+      padding: 40px;
+      color: var(--text2);
+      font-size: 14px;
+    }
+
+    /* ─── LOADING OVERLAY ─── */
+    #loading-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(12px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+    #loading-overlay.active {
+      opacity: 1;
+      pointer-events: all;
+    }
+    .loading-spinner {
+      width: 60px;
+      height: 60px;
+      border: 4px solid rgba(140, 163, 227, 0.2);
+      border-top-color: #6c63ff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+    .loading-text {
+      margin-top: 24px;
+      font-size: 16px;
+      color: var(--text);
+      font-weight: 500;
+    }
+    .loading-subtext {
+      margin-top: 8px;
+      font-size: 13px;
+      color: var(--text2);
+    }
+
+    /* ─── ERROR TOAST ─── */
+    #error-toast {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-100px);
+      background: rgba(224, 80, 80, 0.95);
+      color: white;
+      padding: 16px 32px;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+      z-index: 10001;
+      opacity: 0;
+      transition: all 0.3s ease;
+      pointer-events: none;
+      max-width: 500px;
+      text-align: center;
+    }
+    #error-toast.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+      pointer-events: all;
+    }
+    #error-toast-message {
+      display: block;
+      margin-bottom: 8px;
+    }
+    #error-toast-close {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: none;
+      border: none;
+      color: white;
+      font-size: 20px;
+      cursor: pointer;
+      padding: 0;
+      width: 24px;
+      height: 24px;
+      line-height: 24px;
+      opacity: 0.7;
+      transition: opacity 0.2s;
+      display: block;
+    }
+    #error-toast-close:hover {
+      opacity: 1;
+    }
+
+    /* ─── FOOTER ─── */
+    #footer {
+      margin-top: auto;
+      padding: 40px 20px;
+      background: linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,.08));
+      border-top: 1px solid var(--border);
+    }
+    .footer-legal {
+      text-align: center;
+      max-width: 1200px;
+      margin: 30px auto 0;
+    }
+    .footer-description {
+      text-align: center;
+      font-size: 24px;
+      color: var(--text);
+      line-height: 1.6;
+      font-weight: 500;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+    .footer-description .brand {
+      font-weight: 700;
+    }
+    .footer-description .brand-key {
+      color: #667085;
+    }
+    .footer-description .brand-font {
+      color: #5e84df;
+    }
+    .footer-legal p {
+      margin: 4px 0;
+      font-size: 11px;
+      color: #7c88a5;
+      line-height: 1.5;
+    }
+
+    .scroll-top-btn {
+      position: fixed;
+      bottom: 80px;
+      right: 20px;
+      width: 36px;
+      height: 36px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 50%;
+      color: var(--text2);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      opacity: 0;
+      transition: opacity .2s;
+      z-index: 50;
+    }
+    .scroll-top-btn.visible { opacity: 1; }
+
+    /* ─── MOBILE RESPONSIVE ─── */
+    @media (max-width: 768px) {
+      #header {
+        padding: 12px 16px 8px;
+      }
+      #header h1 {
+        font-size: 22px;
+      }
+      #drop-zone {
+        margin: 30px 16px;
+        padding: 40px 24px;
+      }
+      #drop-zone h2 {
+        font-size: 18px;
+      }
+      #glyph-grid {
+        grid-template-columns: repeat(auto-fill, minmax(72px, 1fr));
+        gap: 6px;
+        padding: 12px 16px;
+      }
+      #controls {
+        padding: 8px 16px;
+        gap: 8px;
+      }
+      #search-box {
+        width: 100%;
+        min-width: 0;
+      }
+      #font-preview-text {
+        font-size: 24px;
+        min-height: 120px;
+      }
+      #export-panel {
+        padding: 16px 20px;
+        gap: 14px;
+      }
+      #export-summary {
+        width: 100%;
+        text-align: center;
+        font-size: 14px;
+      }
+      #saveas-wrap {
+        width: 100%;
+        justify-content: center;
+        flex-wrap: wrap;
+      }
+      #saveas-wrap select {
+        min-width: 200px;
+      }
+      #export-btn {
+        width: 100%;
+        max-width: 400px;
+        padding: 16px 32px;
+        font-size: 15px;
+      }
+      .footer-description {
+        font-size: 18px;
+        padding: 0 20px;
+      }
+      #load-more-container {
+        flex-direction: column;
+        gap: 8px;
+      }
+      #load-more-btn, #show-all-btn {
+        width: 100%;
+        max-width: 300px;
+      }
+      .mode-toggle {
+        width: 100%;
+      }
+      .mode-toggle .btn {
+        flex: 1;
+      }
+    }
+
+    @media (max-width: 480px) {
+      #header h1 {
+        font-size: 20px;
+      }
+      #glyph-grid {
+        grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
+        gap: 5px;
+      }
+      .footer-description {
+        font-size: 16px;
+      }
+      #font-preview-text {
+        font-size: 20px;
+      }
+    }
+</style>
+<link rel="stylesheet" href="assets/keyfont-theme.css">
+</head>
+<body>
+
+<noscript>
+  <div style="padding: 40px; text-align: center; background: #fff3cd; border: 2px solid #ffc107; margin: 20px; border-radius: 8px;">
+    <h2 style="color: #856404; margin-bottom: 12px;">JavaScript Required</h2>
+    <p style="color: #856404;">KeyFont requires JavaScript to function. Please enable JavaScript in your browser to use this font converter and viewer tool.</p>
+  </div>
+</noscript>
+
+<!-- HEADER -->
+<header id="header">
+  <h1>Key<span>Font</span> <span style="font-size: 14px; font-weight: 400; color: var(--text2); margin-left: 8px;">- Free Font Converter & Viewer</span></h1>
+  <div id="header-controls" hidden style="display:flex;align-items:center;gap:10px;flex:1;flex-wrap:wrap;">
+    <span id="font-name-badge" class="badge" style="color:var(--text);border-color:var(--accent);"></span>
+    <button class="btn" onclick="resetFont()">↩ Load new font</button>
+  </div>
+  <div id="header-actions">
+    <a class="btn" href="converter.html">Batch Converter</a>
+  </div>
+</header>
+
+<!-- DROP ZONE -->
+<section id="drop-zone" aria-label="Font file upload area">
+  <h2>Drop a font file here</h2>
+  <p>Or click to browse</p>
+  <p style="font-size: 12px; font-weight: 600; margin-top: 8px; color: #2d3748;">
+    <span style="filter: grayscale(100%) brightness(0);">🔒</span> Your files never leave your device - All processing happens locally in your browser
+  </p>
+  <div class="ext-badges" role="list" aria-label="Supported font formats">
+    <span class="badge" role="listitem" title="TrueType Font">.ttf</span>
+    <span class="badge" role="listitem" title="OpenType Font">.otf</span>
+    <span class="badge" role="listitem" title="Web Open Font Format">.woff</span>
+    <span class="badge" role="listitem" title="Web Open Font Format 2">.woff2</span>
+    <span class="badge" role="listitem" title="Compact Font Format">.cff</span>
+    <span class="badge" role="listitem" title="Printer Font ASCII">.pfa</span>
+    <span class="badge" role="listitem" title="Printer Font Binary">.pfb</span>
+    <span class="badge" role="listitem" title="SVG Font">.svg</span>
+    <span class="badge" role="listitem" title="ZIP archive of fonts">.zip</span>
+  </div>
+  <button class="btn primary" onclick="batchConvertClick(event)">Batch Convert</button>
+  <p style="font-size: 11px; color: var(--text2); margin-top: 4px;">or drop multiple files or one ZIP archive at once</p>
+  <input type="file" id="file-input" accept=".ttf,.otf,.woff,.woff2,.cff,.pfa,.pfb,.svg,.zip" multiple aria-label="Select font files or a ZIP archive to convert or view">
+</section>
+
+<!-- BATCH CONVERSION PANEL -->
+<div id="batch-panel" class="card" hidden>
+  <h2>Batch Conversion</h2>
+  <p class="batch-info"><span id="batch-count">0</span> selected</p>
+  <div class="batch-format-selector">
+    <label for="batch-format">Convert to:</label>
+    <select id="batch-format" onchange="resetBatchUI()">
+      <option value="ttf">TTF (.ttf)</option>
+      <option value="otf">OTF (.otf)</option>
+      <option value="woff">WOFF (.woff)</option>
+      <option value="woff2">WOFF2 (.woff2)</option>
+      <option value="cff">CFF (.cff)</option>
+      <option value="pfa">PFA (.pfa)</option>
+      <option value="pfb">PFB (.pfb)</option>
+      <option value="svg">SVG Font (.svg)</option>
+    </select>
+  </div>
+  <div class="batch-output-selector">
+    <label>Output:</label>
+    <label class="radio-label"><input type="radio" name="batch-output" value="zip" checked onchange="resetBatchUI()"> <span id="batch-download-mode-label">Download ZIP</span></label>
+    <label class="radio-label" id="batch-folder-option" hidden><input type="radio" name="batch-output" value="folder" onchange="resetBatchUI()"> Save to folder</label>
+  </div>
+  <div class="batch-buttons">
+    <button class="btn" onclick="startBatchConversion()">▶ Start Conversion</button>
+    <button class="btn" onclick="cancelBatch()">Cancel</button>
+  </div>
+  <div id="batch-progress" hidden>
+    <div class="progress-bar">
+      <div class="progress-fill" id="batch-progress-fill"></div>
+    </div>
+    <p class="progress-text" id="batch-progress-text">Processing...</p>
+  </div>
+  <div id="batch-results" hidden></div>
+  <button id="batch-download-btn" class="btn" hidden>Download ZIP</button>
+  <button class="btn" onclick="cancelBatch()" id="batch-done-btn" hidden style="margin-top: 8px;">Close</button>
+</div>
+
+<!-- FONT INFO -->
+<div id="font-info" hidden>
+  <div class="font-meta">
+    <h2 id="fi-family">—</h2>
+    <div class="subtitle" id="fi-type-badge"></div>
+    <div class="meta-grid">
+      <div class="meta-item"><span class="label">Glyphs: </span><span class="value" id="fi-count"></span></div>
+      <div class="meta-item"><span class="label">Version: </span><span class="value" id="fi-version"></span></div>
+      <div class="meta-item"><span class="label">PostScript: </span><span class="value" id="fi-ps-name"></span></div>
+      <div class="meta-item"><span class="label">Copyright: </span><span class="value" id="fi-copyright"></span></div>
+    </div>
+  </div>
+  <div id="license-box" hidden>
+    <div class="license-title">⚠ License</div>
+    <div class="license-text" id="fi-license"></div>
+  </div>
+</div>
+
+<!-- FONT PREVIEW -->
+<div id="font-preview-panel" hidden>
+  <h3>Font Preview</h3>
+  <textarea id="font-preview-text" contenteditable="true" spellcheck="false">The quick brown fox jumps over the lazy dog
+ABCDEFGHIJKLMNOPQRSTUVWXYZ
+abcdefghijklmnopqrstuvwxyz
+0123456789</textarea>
+</div>
+
+<!-- CONTROLS -->
+<div id="controls" hidden>
+  <div class="mode-toggle">
+    <button class="btn active" id="mode-keep" onclick="setMode('keep')">☑ Keep selected</button>
+    <button class="btn" id="mode-remove" onclick="setMode('remove')">✕ Remove selected</button>
+  </div>
+  <div class="sep"></div>
+  <button class="btn" onclick="selectAll()">Select all</button>
+  <button class="btn" onclick="selectNone()">Select none</button>
+  <div class="sep"></div>
+  <input type="search" id="search-box" placeholder="Search name, U+xxxx…" oninput="onSearch(this.value)">
+  <div class="sep"></div>
+  <label class="toggle-label">
+    <input type="checkbox" id="show-previews" checked onchange="toggleGlyphPreviews(this.checked)">
+    <span>Show previews</span>
+  </label>
+</div>
+
+<!-- STATS BAR -->
+<div id="stats-bar" hidden>
+  <span id="stats-text">—</span>
+  <div id="progress-bar"><div id="progress-fill" style="width:0%"></div></div>
+  <span id="stats-size">—</span>
+</div>
+
+<!-- GLYPH GRID -->
+<div id="glyph-grid" hidden></div>
+<div id="load-more-container" hidden>
+  <button id="load-more-btn" onclick="loadMoreGlyphs()">Load More Glyphs</button>
+  <button id="show-all-btn" onclick="showAllGlyphs()">Show All</button>
+</div>
+
+<div id="glyph-context-menu" hidden>
+  <div class="glyph-context-title" id="glyph-context-title">Glyph</div>
+  <button class="glyph-context-action" onclick="exportContextGlyphAs('png')">Save Glyph as PNG</button>
+  <button class="glyph-context-action" onclick="exportContextGlyphAs('svg')">Save Glyph as SVG</button>
+  <div class="glyph-context-hint">Right-click any glyph card</div>
+</div>
+
+<!-- EXPORT PANEL -->
+<div id="export-panel" hidden>
+  <div id="export-summary">—</div>
+  <div id="saveas-wrap" hidden>
+    <span>Save As</span>
+    <select id="save-as" onchange="onOutputFormatChange(this.value)">
+      <option value="">Select format</option>
+    </select>
+  </div>
+  <div id="rebuild-note"></div>
+  <button id="export-btn" onclick="exportFont()">⬇ Download Font</button>
+</div>
+
+<footer id="footer">
+  <span>Local processing · Files never leave this device</span>
+  <span class="tool-footer-links"><span>KeyFont</span><a href="LICENSE">MIT License</a></span>
+</footer>
+
+<button class="scroll-top-btn" id="scroll-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑</button>
+
+<!-- LOADING OVERLAY -->
+<div id="loading-overlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-text">Loading Font...</div>
+  <div class="loading-subtext" id="loading-subtext">Processing file</div>
+</div>
+
+<!-- ERROR TOAST -->
+<div id="error-toast">
+  <button id="error-toast-close" onclick="document.getElementById('error-toast').classList.remove('show')">×</button>
+  <span id="error-toast-message">Oops, something went wrong</span>
+</div>
+
+<!-- Readable source runtime -->
+<script>
+  window.__KEYFONT_SOURCE_MODE__ = true;
+  window.__KEYFONT_BATCH_WORKER_SOURCE__ = (() => {
+    const workerFiles = [
+      'src/batch-worker-shim.js',
+      'src/fflate.js',
+      'src/glyph-names.js',
+      'src/table-map.js',
+      'src/ttf.js',
+      'src/cff.js',
+      'src/type1.js',
+      'src/svg.js',
+      'src/webgl-accel.js',
+      'src/vendor/fonteditor-woff2.js',
+      'src/main.js',
+      'src/keyfont-ui.js',
+      'src/keyfont-engine.js',
+      'src/batch-worker-handler.js'
+    ];
+    const urls = workerFiles.map(file => JSON.stringify(new URL(file, document.baseURI).href));
+    return `importScripts(${urls.join(',')});`;
+  })();
+</script>
+<script src="src/agl-data.js"></script>
+<script src="src/fflate.js"></script>
+<script src="src/brotli.js"></script>
+<script src="src/glyph-names.js"></script>
+<script src="src/table-map.js"></script>
+<script src="src/ttf.js"></script>
+<script src="src/cff.js"></script>
+<script src="src/type1.js"></script>
+<script src="src/svg.js"></script>
+<script src="src/webgl-accel.js"></script>
+<script src="src/vendor/fonteditor-woff2.js"></script>
+<script src="src/main.js"></script>
+<script src="src/keyfont-ui.js"></script>
+<script src="src/keyfont-engine.js"></script>
+<script src="src/keyfont-mini-converter.js"></script>
+</body>
+</html>

@@ -1,0 +1,24 @@
+{
+  "name": "keyfont",
+  "version": "1.0.0",
+  "description": "Open-source, browser-based font conversion toolkit",
+  "private": false,
+  "scripts": {
+    "vendor:woff2": "esbuild src/fonteditor-woff2-wrapper.js --bundle --platform=browser --format=iife --loader:.wasm=binary --outfile=src/vendor/fonteditor-woff2.js",
+    "test": "node --check src/main.js && node --check src/keyfont-ui.js && node --check src/keyfont-engine.js && node --check src/keyfont-mini-converter.js && node --check src/ttf.js && node --check src/cff.js && node --check src/type1.js"
+  },
+  "keywords": [
+    "font",
+    "converter",
+    "woff2",
+    "opentype",
+    "truetype"
+  ],
+  "author": "KeyFont contributors",
+  "license": "MIT",
+  "type": "commonjs",
+  "dependencies": {
+    "esbuild": "^0.28.1",
+    "fonteditor-core": "^2.6.3"
+  }
+}
