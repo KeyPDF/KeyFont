@@ -24,6 +24,14 @@ python -m http.server
 - `index.html` is the font viewer, editor, and single-font utility.
 - `converter.html` converts files, ZIP archives, or folders to a selected target format.
 
+## Third-party components
+
+- `src/vendor/fonteditor-woff2.js` provides WOFF2 encoding and decoding through `fonteditor-core` and its bundled WASM codec.
+- `src/brotli.js` provides Brotli decompression support.
+- `src/fflate.js` provides ZIP handling and WOFF zlib compression support.
+
+KeyFont's project code is maintained in this repository. The third-party components above remain under their respective licenses.
+
 
 ## License
 
